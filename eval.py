@@ -4,6 +4,9 @@ from transformers import (
     ViTImageProcessor,
     Trainer
 )
+from transformers.data.data_collator import DefaultDataCollator
+# 导入image_processor
+from transformers import ViTImageProcessorFast
 from datasets import load_from_disk
 from PIL import Image
 import numpy as np
@@ -39,7 +42,7 @@ def compute_metrics(eval_pred):
     return {"accuracy": acc}
 
 
-model = ViTForImageClassification.from_pretrained('./results/checkpoint-1128')
+model = ViTForImageClassification.from_pretrained('./results/checkpoint-2256')
 
 training_args = TrainingArguments(
     output_dir='./results_evaluate',
