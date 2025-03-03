@@ -1,0 +1,24 @@
+Metadata-Version: 2.2
+Name: vit-medical
+Version: 0.1.0
+Summary: A project for pre-training Vision Transformers for medical applications.
+Author: Your Name
+Author-email: your.email@example.com
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Requires-Dist: torch>=1.7.0
+Requires-Dist: transformers>=4.0.0
+Requires-Dist: datasets>=1.0.0
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: scikit-learn
+Requires-Dist: opencv-python
+Requires-Dist: PyYAML
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
