@@ -1,4 +1,3 @@
-
 import logging
 import os
 import sys
@@ -22,31 +21,66 @@ from transformers.trainer_utils import get_last_checkpoint
 
 import yaml
 from trl import ModelConfig, ScriptArguments, TrlParser
-
+from torchvision.transforms import Compose, ToTensor, Normalize, Resize
 
 logger = logging.getLogger(__name__)
 from vit_medical.model.vit_modeling_config import ViTConfig
 from vit_medical.model.modeling_vit import ViTModel, ViTForImageClassification
 
 logger = logging.getLogger(__name__)
+from transformers import AutoImageProcessor
+
+cache_dir = '/root/autodl-tmp/vit_medical_cache'
+os.makedirs(cache_dir, exist_ok=True)
+
+checkpoint = "google/vit-base-patch16-224-in21k"
+image_processor = AutoImageProcessor.from_pretrained(checkpoint, use_fast=True, cache_dir=cache_dir)
 
 
-# class ImageCollator:
-#     """处理图像的数据整理器"""
-#     def __init__(self, processor):
-#         self.processor = processor
+class ImageCollator:
+    """处理图像的数据整理器"""
+    def __init__(self, processor):
+        self.processor = processor
+        # 初始化转换器
+        self.size = (480, 480)
+        self.normalize = Normalize(mean=self.processor.image_mean, std=self.processor.image_std)
+        self.transforms = Compose([Resize(self.size), ToTensor(), self.normalize])
         
-#     def __call__(self, features):
-#         # 提取图像和标签
-#         images = [feature["images"] for feature in features]
-#         labels = [feature["labels"] for feature in features]
+    def __call__(self, features):
+        # 提取图像和标签
+        batch = {}
         
-#         # 预处理图像
-#         batch = self.processor(images=images, return_tensors="pt")
-#         batch["labels"] = torch.tensor(labels, dtype=torch.long)
+        if "images" in features[0]:
+            # 处理原始图像
+            images = [feature["images"] for feature in features]
+            batch["pixel_values"] = torch.stack([
+                self.transforms(img.convert("RGB")) for img in images
+            ])
+            
+            if "labels" in features[0]:
+                batch["labels"] = torch.tensor([feature["labels"] for feature in features], dtype=torch.long)
+        elif "pixel_values" in features[0]:
+            # 如果已经预处理过的特征
+            # 修复这里，确保每个feature["pixel_values"]是Tensor而不是list
+            batch["pixel_values"] = torch.stack([
+                feature["pixel_values"] if isinstance(feature["pixel_values"], torch.Tensor) 
+                else torch.tensor(feature["pixel_values"]) 
+                for feature in features
+            ])
+            
+            if "labels" in features[0]:
+                batch["labels"] = torch.tensor([feature["labels"] for feature in features], dtype=torch.long)
         
-#         return batch
-
+        return batch
+    
+    def transform_dataset(self, examples):
+        """用于dataset.map的转换函数"""
+        # 确保返回的是Tensor类型而不是list
+        examples["pixel_values"] = [
+            self.transforms(img.convert("RGB")) for img in examples["images"]
+        ]
+        del examples["images"]
+        return examples
 
 def main(script_args, training_args, model_args, model_config):
     # Set seed for reproducibility
@@ -87,7 +121,8 @@ def main(script_args, training_args, model_args, model_config):
     # Load datasets
     ###############
     dataset = load_from_disk(script_args.dataset_name)
-
+    dataset['test'] = dataset['test'].select(range(1000))
+    
     ######################
     # Load image processor
     ######################
@@ -127,19 +162,31 @@ def main(script_args, training_args, model_args, model_config):
     logger.info(f"Model structure: {model}")
     logger.info(f"Model parameters: {model_num_params}")
 
-    # data_collator = ImageCollator(processor=image_processor)
-    data_collator = DefaultDataCollator()
-
+    # 创建 ImageCollator 并用它预处理数据集
+    data_collator = ImageCollator(processor=image_processor)
+    
+    # 使用 data_collator 对数据集进行预处理
+    logger.info("*** Preprocessing dataset with ImageCollator ***")
+    dataset_transformed = {}
+    for split in dataset:
+        dataset_transformed[split] = dataset[split].map(
+            data_collator.transform_dataset, 
+            batched=True,
+            batch_size=2,
+            desc=f"Processing {split} split",
+            num_proc = 1
+        )
+    
     ################################
     # Initialize the PT trainer
     ################################
     trainer = Trainer(
         model=model,
         args=training_args,
-        train_dataset=dataset[script_args.dataset_train_split],
-        eval_dataset=dataset[script_args.dataset_test_split] if training_args.eval_strategy != "no" else None, 
+        train_dataset=dataset_transformed[script_args.dataset_train_split],
+        eval_dataset=dataset_transformed[script_args.dataset_test_split] if training_args.eval_strategy != "no" else None, 
         processing_class=image_processor,
-        data_collator=data_collator,
+        data_collator=data_collator,  # 使用 ImageCollator
     )
 
     ###############
@@ -151,7 +198,7 @@ def main(script_args, training_args, model_args, model_config):
         checkpoint = training_args.resume_from_checkpoint
     elif last_checkpoint is not None:
         checkpoint = last_checkpoint
-    train_result = trainer.train(resume_from_checkpoint=checkpoint)
+    train_result = trainer.train(resume_from_checkpoint='/root/vit-medical/data/vit-medical/checkpoint-500')
     metrics = train_result.metrics
     metrics["train_samples"] = len(dataset[script_args.dataset_train_split])
     trainer.log_metrics("train", metrics)
@@ -206,10 +253,10 @@ if __name__ == "__main__":
         "--config", type=str, default="./configs/training_config.yaml", help="path to yaml config file of PT"
     )
     parser = TrlParser((ScriptArguments, TrainingArguments, ModelConfig))
-    script_args, training_args, model_args = parser.parse_args_and_config()
+    script_args, training_args, model_args = parser.parse_args_and_config()   
+
+
     model_config = yaml.load(
         open(model_config_parser.parse_args().config, "r", encoding="utf-8"), Loader=yaml.FullLoader
     )["model_config"]
     main(script_args, training_args, model_args, model_config)
-
-
