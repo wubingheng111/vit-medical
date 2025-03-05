@@ -55,6 +55,13 @@ To pre-train the ViT model, use the following command:
 ```
 python scripts/vit_pt.py --config configs/training_config.yaml
 ```
+## datase
+from datasets import load_dataset
+
+# Login using e.g. `huggingface-cli login` to access this dataset
+ds = load_dataset("wubingheng/vit-medical-classifaction2.0")
+
+
 
 ### Inference
 
@@ -75,3 +82,4 @@ Contributions are welcome! Please open an issue or submit a pull request for any
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for more details.
+
