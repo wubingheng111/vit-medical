@@ -2,7 +2,7 @@
 
 # ViT Medical
 
-ViT Medical is a project that implements a Vision Transformer (ViT) model for medical image analysis. This repository provides tools for training and inference using the ViT architecture, leveraging the Transformers library.
+ViT Medical is a project that implements a Vision Transformer (ViT) model for traditional Chinese medicine classification. This repository provides tools for training and inference using the ViT architecture, leveraging the Transformers library.
 
 ## Features
 
@@ -61,12 +61,13 @@ from datasets import load_dataset
 Login using e.g. `huggingface-cli login` to access this dataset
 ds = load_dataset("wubingheng/vit-medical-classifaction2.0")
 ```
-### Inference
+### Train
 
-To perform inference with a trained model, run:
+To train model, run:
 
 ```
-python scripts/inference.py --model_path <path_to_trained_model>
+accelerate launch --config_file accelerate_configs/single_gpu.yaml ./scripts/vit_pt.py --config configs/training_config.yaml
+
 ```
 
 ## Configuration
@@ -76,8 +77,4 @@ Training parameters can be adjusted in the `configs/training_config.yaml` file. 
 ## Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
-
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for more details.
 
