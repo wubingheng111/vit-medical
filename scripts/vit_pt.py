@@ -161,6 +161,7 @@ def main(script_args, training_args, model_args, model_config):
     model_num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     logger.info(f"Model structure: {model}")
     logger.info(f"Model parameters: {model_num_params}")
+    # 
 
     # 创建 ImageCollator 并用它预处理数据集
     data_collator = ImageCollator(processor=image_processor)
