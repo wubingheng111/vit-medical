@@ -74,7 +74,10 @@ accelerate launch --config_file accelerate_configs/single_gpu.yaml ./scripts/vit
 
 Training parameters can be adjusted in the `configs/training_config.yaml` file. This includes settings such as learning rate, batch size, and number of training epochs.
 
+
 ## Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
 
+## train result
+https://wandb.ai/loser_cheems/huggingface/runs/rqyx86dn?nw=nwuserbinghengwu&panelDisplayName=eval%2Floss&panelSectionName=eval
