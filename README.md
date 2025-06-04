@@ -80,4 +80,8 @@ Training parameters can be adjusted in the `configs/training_config.yaml` file. 
 Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
 
 ## train result
-https://wandb.ai/loser_cheems/huggingface/runs/rqyx86dn?nw=nwuserbinghengwu&panelDisplayName=eval%2Floss&panelSectionName=eval
+![W B Chart 2025_6_4 14_00_12](https://github.com/user-attachments/assets/bb3b5d8c-483f-4c84-839a-4de1d0a1316c)
+![W B Chart 2025_6_4 14_00_36](https://github.com/user-attachments/assets/deffee00-757d-4ab4-a4c3-91dd3b3b1953)
+![W B Chart 2025_6_4 14_00_45](https://github.com/user-attachments/assets/4cdb1970-a900-4d4e-bb35-856dbfeb14a7)
+
+
